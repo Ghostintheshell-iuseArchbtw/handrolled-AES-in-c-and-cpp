@@ -1,5 +1,5 @@
 # handrolled-AES-in-c-and-cpp
-##IN DEVELOPMENT KNOWN BUGS In the C++ code, the RCON is defined up to 15 elements, which is sufficient for AES-256's 14 rounds. But the C code's RCON is insufficient.
+##IN DEVELOPMENT KNOWN BUGS In the C AND C++ code IMPLIMENTATIONS, the RCON is defined up to 15 elements, which is sufficient for AES-256's 14 rounds. But the C code's RCON is insufficient.
 
 So, to summarize, the main issues in the C code are:
 
