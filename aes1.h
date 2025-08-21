@@ -1,5 +1,5 @@
-#ifndef AES_H
-#define AES_H
+#ifndef AES1_H
+#define AES1_H
 
 #include <stdint.h>
 #include <stddef.h>
@@ -50,4 +50,4 @@ EXPORT AES_STATUS AES_decrypt(const AES_CTX *ctx, const uint8_t *ciphertext, uin
 }
 #endif
 
-#endif // AES_H
+#endif // AES1_H
