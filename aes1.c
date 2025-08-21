@@ -44,8 +44,9 @@ static const uint8_t INV_SBOX[256] = {
 };
 
 // Round constants
-static const uint8_t RCON[11] = {
-    0x8D, 0x01, 0x02, 0x04, 0x08, 0x10, 0x20, 0x40, 0x80, 0x1B, 0x36
+static const uint8_t RCON[15] = {
+    0x01, 0x02, 0x04, 0x08, 0x10, 0x20, 0x40, 0x80,
+    0x1B, 0x36, 0x6C, 0xD8, 0xAB, 0x4D, 0x9A
 };
 
 // Helper function prototypes
@@ -170,39 +171,53 @@ static void inv_mix_columns(uint8_t *state) {
 // Key expansion
 static void key_expansion(const uint8_t *key, uint8_t *round_keys, size_t key_len) {
     uint8_t temp[4];
-    int i;
+    size_t i;
+
+    // Determine number of rounds and total expanded key size
+    size_t rounds = 0;
+    switch (key_len) {
+        case AES_KEY_SIZE_128: rounds = 10; break;
+        case AES_KEY_SIZE_192: rounds = 12; break;
+        case AES_KEY_SIZE_256: rounds = 14; break;
+        default: return; // invalid key length
+    }
+    size_t expanded_size = (rounds + 1) * AES_BLOCK_SIZE;
 
     // The first round key is the key itself.
     for (i = 0; i < key_len; i++) {
         round_keys[i] = key[i];
     }
 
-    // All other round keys are found from the previous round keys.
-    for (i = key_len; i < 240; i += 4) {
+    // Generate all remaining round keys
+    for (i = key_len; i < expanded_size; i += 4) {
         temp[0] = round_keys[i - 4];
         temp[1] = round_keys[i - 3];
         temp[2] = round_keys[i - 2];
         temp[3] = round_keys[i - 1];
 
         if (i % key_len == 0) {
-            // Rotate the 4 bytes in a word to the left once.
+            // Rotate and substitute
             uint8_t t = temp[0];
             temp[0] = temp[1];
             temp[1] = temp[2];
             temp[2] = temp[3];
             temp[3] = t;
 
-            // Apply the S-box to each of the four bytes.
             temp[0] = SBOX[temp[0]];
             temp[1] = SBOX[temp[1]];
             temp[2] = SBOX[temp[2]];
             temp[3] = SBOX[temp[3]];
 
-            // XOR with the round constant.
             temp[0] ^= RCON[i / key_len - 1];
+        } else if (key_len == AES_KEY_SIZE_256 && (i % key_len) == 16) {
+            // Additional substitution step for AES-256
+            temp[0] = SBOX[temp[0]];
+            temp[1] = SBOX[temp[1]];
+            temp[2] = SBOX[temp[2]];
+            temp[3] = SBOX[temp[3]];
         }
 
-        round_keys[i] = round_keys[i - key_len] ^ temp[0];
+        round_keys[i]     = round_keys[i - key_len] ^ temp[0];
         round_keys[i + 1] = round_keys[i - key_len + 1] ^ temp[1];
         round_keys[i + 2] = round_keys[i - key_len + 2] ^ temp[2];
         round_keys[i + 3] = round_keys[i - key_len + 3] ^ temp[3];

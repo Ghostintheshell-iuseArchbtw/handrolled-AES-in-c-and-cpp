@@ -3,6 +3,7 @@
 #include <iomanip>
 #include <string>
 #include <vector>
+#include <algorithm>
 
 AES::AES(const std::vector<uint8_t>& key) : key_(key) {
     validate_key_size(key_);
@@ -114,16 +115,12 @@ void AES::key_expansion() {
     
     // First round key is the original key
     std::copy(key_.begin(), key_.end(), round_keys_.begin());
-    
-    // Number of 32-bit words in key
+
     size_t nk = static_cast<size_t>(key_size_) / 4;
-    
-    // Total number of 32-bit words in expanded key
-    size_t nb = 4;  // Block size is always 4 words (128 bits)
+    size_t nb = 4;
     size_t nr = num_rounds_;
     size_t words = nb * (nr + 1);
-    
-    // Generate subsequent round keys
+
     for (size_t i = nk; i < words; i++) {
         std::vector<uint8_t> temp(4);
         for (size_t j = 0; j < 4; j++) {
@@ -156,6 +153,7 @@ void AES::key_expansion() {
             round_keys_[i * 4 + j] = round_keys_[(i-nk) * 4 + j] ^ temp[j];
         }
     }
+
 }
 
 void AES::sub_bytes(std::vector<uint8_t>& state) {
